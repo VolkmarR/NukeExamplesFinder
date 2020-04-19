@@ -51,8 +51,11 @@ namespace NukeExamplesFinder.Services
             var repoList = FileGateway.LoadRepositories();
             var repoIndex = repoList.ToDictionary(q => q.Id, q => q);
 
+            var nukeFile = await GitHubGateway.GetRepositoriesWithNukeFileAsync();
+            var nukeBuild = await GitHubGateway.GetRepositoriesWithNukeBuildAsync();
+
             // Update the RepoList
-            foreach (var item in await GitHubGateway.GetRepositoriesWithNukeFileAsync())
+            foreach (var item in nukeFile.Union(nukeBuild))
             {
                 if (!repoIndex.TryGetValue(item.Id, out var repository))
                 {
