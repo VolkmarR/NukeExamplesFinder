@@ -72,7 +72,7 @@ namespace NukeExamplesFinder.Gateways
             request.Order = SortDirection.Descending;
             request.SortField = CodeSearchSort.Indexed;
 
-            var result = new List<RepositoryCodeSearch>();
+            var result = new Dictionary<long, RepositoryCodeSearch>();
 
             while (true)
             {
@@ -80,11 +80,13 @@ namespace NukeExamplesFinder.Gateways
                 if (!canContinue || searchResult == null || searchResult.Items.Count == 0)
                     break;
 
-                result.AddRange(searchResult.Items.Where(filter).Select(Transform));
+                foreach (var item in searchResult.Items.Where(filter).Select(Transform))
+                    if (!result.ContainsKey(item.Id))
+                        result[item.Id] = item;
                 request.Page++;
             }
 
-            return result;
+            return result.Values.ToList();
         }
 
         async Task<bool> AddCodeFiles(string owner, string name, IEnumerable<string> pathList, List<RepositoryContent> contentList)
@@ -111,15 +113,6 @@ namespace NukeExamplesFinder.Gateways
 
         public async Task<List<RepositoryCodeSearch>> GetRepositoriesWithNukeFileAsync()
         {
-            /*
-            var searchReq = new SearchCodeRequest("Nuke.Common;")
-            {
-                Forks = false,
-                Language = Language.CSharp,
-                PerPage = 100,
-                Page = 1,
-            };
-            */
             Logger.LogInformation("Searching Repositories containing a .nuke file");
 
             var request = new SearchCodeRequest(".sln")
@@ -128,6 +121,18 @@ namespace NukeExamplesFinder.Gateways
             };
 
             return await CodeSearchAsync(request, q => string.Equals(q.Path, ".nuke", StringComparison.OrdinalIgnoreCase));
+        }
+
+        public async Task<List<RepositoryCodeSearch>> GetRepositoriesWithNukeBuildAsync()
+        {
+            Logger.LogInformation("Searching Repositories containing the text NukeBuild");
+
+            var request = new SearchCodeRequest("NukeBuild")
+            {
+                Language = Language.CSharp,
+            };
+
+            return await CodeSearchAsync(request, q => q.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList)
@@ -180,7 +185,7 @@ namespace NukeExamplesFinder.Gateways
                 {
                     var path = !string.IsNullOrWhiteSpace(buildFilePath) ? buildFilePath : "build/build.cs";
                     (canContinue, contentListResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(owner, name, path));
-                    if (contentListResponse.Count == 1)
+                    if (canContinue && contentListResponse.Count == 1)
                         files.Add(contentListResponse[0]);
                 }
                 catch (NotFoundException)
@@ -192,10 +197,13 @@ namespace NukeExamplesFinder.Gateways
                     {
                         var path = !string.IsNullOrWhiteSpace(buildFilePath) ? buildFilePath : "build";
                         (canContinue, contentListResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(owner, name, path));
-                        if (contentListResponse.Count == 1)
-                            files.Add(contentListResponse[0]);
-                        else if (canContinue)
-                            canContinue = await AddCodeFiles(owner, name, contentListResponse.Where(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name)).Select(q => q.Path), files);
+                        if (canContinue)
+                        {
+                            if (contentListResponse.Count == 1)
+                                files.Add(contentListResponse[0]);
+                            else
+                                canContinue = await AddCodeFiles(owner, name, contentListResponse.Where(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name)).Select(q => q.Path), files);
+                        }
 
                         if (!files.Any(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name) && BuildFileAnalyzer.BuildFileHits(q.Content) > 1))
                             files.Clear();
