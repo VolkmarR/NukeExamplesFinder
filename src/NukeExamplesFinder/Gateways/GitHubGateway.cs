@@ -108,6 +108,7 @@ namespace NukeExamplesFinder.Gateways
                 Page = 1,
             };
             */
+            Logger.LogInformation("Searching Repositories containing a .nuke file");
 
             var request = new SearchCodeRequest(".sln")
             {
@@ -119,7 +120,9 @@ namespace NukeExamplesFinder.Gateways
 
         public async Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList)
         {
+            Logger.LogInformation("Refeshing {count} repository details", idList.Count);
             var result = new List<RepositoryDetail>();
+            var logPoition = 0;
             foreach (var id in idList)
             {
                 (var canContinue, var repo) = await ExecServiceAsync(() => GitHubClient.Repository.Get(id));
@@ -127,6 +130,9 @@ namespace NukeExamplesFinder.Gateways
                     break;
 
                 result.Add(new RepositoryDetail { Id = id, Description = repo.Description, Archived = repo.Archived, Stars = repo.StargazersCount, Watchers = repo.SubscribersCount });
+
+                if (++logPoition % 25 == 0)
+                    Logger.LogInformation("{position}", logPoition);
             }
 
             return result;
