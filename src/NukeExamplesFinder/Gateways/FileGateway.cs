@@ -3,6 +3,7 @@ using NukeExamplesFinder.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -16,6 +17,9 @@ namespace NukeExamplesFinder.Gateways
 
         void MoveToArchive(string filePath)
         {
+            if (!File.Exists(filePath))
+                return;
+
             var archiveFileName = $"{Path.GetFileNameWithoutExtension(filePath)}_{DateTime.Now:yyMMddhms}{Path.GetExtension(filePath)}";
             File.Move(filePath, Path.Combine(ArchivePath, archiveFileName));
         }
@@ -45,7 +49,7 @@ namespace NukeExamplesFinder.Gateways
         public void SaveRepositories(List<Repository> repositories)
         {
             MoveToArchive(RepositoriesFilePath);
-            File.WriteAllText(RepositoriesFilePath, JsonSerializer.Serialize(repositories, JsonOptions));
+            File.WriteAllText(RepositoriesFilePath, JsonSerializer.Serialize(repositories.OrderBy(q => q.Id), JsonOptions));
         }
 
         public void SaveMarkdown(string content)
