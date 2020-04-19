@@ -24,7 +24,7 @@ namespace NukeExamplesFinder.Services
                 .AppendLine()
                 .AppendLine("| Name | Url | Stars | Watchers |")
                 .AppendLine("| --- | --- | --- | --- |");
-            foreach (var item in repositories.OrderBy(q => q.Name).Where(q => !q.Archived))
+            foreach (var item in repositories.Where(q => !q.Archived).OrderByDescending(q => q.Stars).ThenByDescending(q => q.Watchers).ThenBy(q => q.Name))
                 sb.AppendLine($"| {item.Name} | {item.HtmlUrl} | {item.Stars} | {item.Watchers} |");
 
             return sb.ToString();
