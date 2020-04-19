@@ -11,7 +11,14 @@ namespace NukeExamplesFinder.Gateways
     class FileGateway : IFileGateway
     {
         readonly string DataPath;
+        readonly string ArchivePath;
         readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { WriteIndented = true };
+
+        void MoveToArchive(string filePath)
+        {
+            var archiveFileName = $"{Path.GetFileNameWithoutExtension(filePath)}_{DateTime.Now:yyMMddhms}{Path.GetExtension(filePath)}";
+            File.Move(filePath, Path.Combine(ArchivePath, archiveFileName));
+        }
 
         string RepositoriesFilePath => Path.Combine(DataPath, "Repos.json");
         string MarkdownFilePath => Path.Combine(DataPath, "Directory.md");
@@ -22,6 +29,9 @@ namespace NukeExamplesFinder.Gateways
             if (string.IsNullOrEmpty(DataPath))
                 DataPath = ".\\Data\\";
             Directory.CreateDirectory(DataPath);
+
+            ArchivePath = Path.Combine(DataPath, "Archive");
+            Directory.CreateDirectory(ArchivePath);
         }
 
         public List<Repository> LoadRepositories()
@@ -34,11 +44,13 @@ namespace NukeExamplesFinder.Gateways
 
         public void SaveRepositories(List<Repository> repositories)
         {
+            MoveToArchive(RepositoriesFilePath);
             File.WriteAllText(RepositoriesFilePath, JsonSerializer.Serialize(repositories, JsonOptions));
         }
 
         public void SaveMarkdown(string content)
         {
+            MoveToArchive(MarkdownFilePath);
             File.WriteAllText(MarkdownFilePath, content);
         }
     }
