@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using NukeExamplesFinder.Models;
-using Octokit;
+﻿using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using NukeExamplesFinder.Common;
 
 namespace NukeExamplesFinder.Gateways
 {
@@ -56,10 +55,7 @@ namespace NukeExamplesFinder.Gateways
             try
             {
                 if (await CheckApiAvailableAsync())
-                {
-                    Thread.Sleep(100);
                     return (true, await call());
-                }
             }
             catch (AbuseException ex)
             {
@@ -89,6 +85,22 @@ namespace NukeExamplesFinder.Gateways
             }
 
             return result;
+        }
+
+        async Task<bool> AddCodeFiles(string owner, string name, IEnumerable<string> pathList, List<RepositoryContent> contentList)
+        {
+            if (!await CheckApiAvailableAsync())
+                return false;
+
+            foreach (var path in pathList)
+            {
+                (var canContinue, var contentResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(owner, name, path));
+                if (!canContinue)
+                    return false;
+                contentList.Add(contentResponse[0]);
+            }
+
+            return true;
         }
 
         public GitHubGateway(IGitHubClient gitHubClient, ILogger<GitHubGateway> logger)
@@ -140,7 +152,7 @@ namespace NukeExamplesFinder.Gateways
                     Archived = repo.Archived,
                     Stars = repo.StargazersCount,
                     Watchers = repo.SubscribersCount,
-                    
+
                 });
 
                 if (++logPoition % 25 == 0)
@@ -150,43 +162,69 @@ namespace NukeExamplesFinder.Gateways
             return result;
         }
 
-        
         public async Task<List<BuildFile>> GetBuildFilesAsync(List<(long id, string owner, string name, string buildFilePath)> repoList)
         {
             Logger.LogInformation("Refeshing {count} build files", repoList.Count);
 
             var result = new List<BuildFile>();
             var logPoition = 0;
-            bool canContinue;
-            IReadOnlyList<RepositoryContent> contentResponse = null;
+            List<RepositoryContent> files = new List<RepositoryContent>();
 
-            foreach (var repo in repoList)
+            foreach (var (id, owner, name, buildFilePath) in repoList)
             {
+                files.Clear();
+                var canContinue = true;
+                IReadOnlyList<RepositoryContent> contentListResponse;
+
                 try
                 {
-                    var path = !string.IsNullOrWhiteSpace(repo.buildFilePath) ? repo.buildFilePath : "build";
-                    (canContinue, contentResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(repo.owner, repo.name, "build"));
+                    var path = !string.IsNullOrWhiteSpace(buildFilePath) ? buildFilePath : "build/build.cs";
+                    (canContinue, contentListResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(owner, name, path));
+                    if (contentListResponse.Count == 1)
+                        files.Add(contentListResponse[0]);
                 }
                 catch (NotFoundException)
+                { }
+
+                if (files.Count == 0)
                 {
-                    var searchCodeRequest = new SearchCodeRequest("Nuke", repo.owner, repo.name) { FileName = "build.cs" };
+                    try
+                    {
+                        var path = !string.IsNullOrWhiteSpace(buildFilePath) ? buildFilePath : "build";
+                        (canContinue, contentListResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(owner, name, path));
+                        if (contentListResponse.Count == 1)
+                            files.Add(contentListResponse[0]);
+                        else if (canContinue)
+                            canContinue = await AddCodeFiles(owner, name, contentListResponse.Where(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name)).Select(q => q.Path), files);
+
+                        if (!files.Any(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name) && BuildFileAnalyzer.BuildFileHits(q.Content) > 1))
+                            files.Clear();
+                    }
+                    catch (NotFoundException)
+                    {
+                        files.Clear();
+                    }
+                }
+
+                if (files.Count == 0)
+                {
+                    var searchCodeRequest = new SearchCodeRequest("Nuke", owner, name) { Language = Language.CSharp, In = new List<CodeInQualifier> { CodeInQualifier.File } };
                     SearchCodeResult searchResponse;
 
                     (canContinue, searchResponse) = await ExecServiceAsync(() => GitHubClient.Search.SearchCode(searchCodeRequest));
                     if (canContinue && searchResponse != null)
-                    {
-                        var buildFile = searchResponse.Items.FirstOrDefault(q => string.Equals(q.Name, "build.cs", StringComparison.OrdinalIgnoreCase));
-                        if (buildFile != null)
-                            (canContinue, contentResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(repo.owner, repo.name, buildFile.Path));
-                    }
+                        canContinue = await AddCodeFiles(owner, name, searchResponse.Items.Where(q => BuildFileAnalyzer.IsCSharpFile(q.Name)).Select(q => q.Path), files);
                 }
 
                 if (!canContinue)
                     break;
 
-                var contentFile = contentResponse?.FirstOrDefault(q => string.Equals(q.Name, "build.cs", StringComparison.OrdinalIgnoreCase) && q.Type == ContentType.File);
+                var contentFile = files?.Where(q => q.Type == ContentType.File && BuildFileAnalyzer.IsCSharpFile(q.Name))
+                                    .OrderByDescending(q => BuildFileAnalyzer.BuildFileHits(q.Content))
+                                    .FirstOrDefault();
+
                 if (contentFile != null)
-                    result.Add(new BuildFile { RepoId = repo.id, FilePath = contentFile.Path, Url = contentFile.HtmlUrl, Size = contentFile.Size, Content = contentFile.Content });
+                    result.Add(new BuildFile { RepoId = id, FilePath = contentFile.Path, Url = contentFile.HtmlUrl, Size = contentFile.Size, Content = contentFile.Content });
 
                 if (++logPoition % 25 == 0)
                     Logger.LogInformation("{position}", logPoition);
