@@ -31,19 +31,6 @@ namespace NukeExamplesFinder.Services
             values.LastDetailUpdated = DateTime.Now;
         }
 
-        string RenderMarkDown(List<Repository> repositories)
-        {
-            var sb = new StringBuilder();
-            sb
-                .AppendLine("# GitHub Repositories using Nuke.Build")
-                .AppendLine()
-                .AppendLine("| Name | Url | Stars | Watchers |")
-                .AppendLine("| --- | --- | --- | --- |");
-            foreach (var item in repositories.OrderBy(q => q.Name).Where(q => !q.Archived))
-                sb.AppendLine($"| {item.Name} | {item.HtmlUrl} | {item.Stars} | {item.Watchers} |");
-
-            return sb.ToString();
-        }
 
         public RepositoryListService(IGitHubGateway gitHubGateway, IFileGateway fileGateway)
         {
@@ -79,8 +66,6 @@ namespace NukeExamplesFinder.Services
             }
 
             FileGateway.SaveRepositories(repoList);
-
-            FileGateway.SaveMarkdown(RenderMarkDown(repoList));
         }
     }
 }
