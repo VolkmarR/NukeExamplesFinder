@@ -9,7 +9,10 @@ namespace NukeExamplesFinder.Services
 {
     class RenderService
     {
-        private readonly IFileGateway FileGateway;
+        readonly IFileGateway FileGateway;
+
+        int Score(Repository repo)
+            => repo.Stars * 3 + repo.Watchers * 2 + repo.BuildFileSize / 1000;
 
         public RenderService(IFileGateway fileGateway)
         {
@@ -22,10 +25,10 @@ namespace NukeExamplesFinder.Services
             sb
                 .AppendLine("# GitHub Repositories using Nuke.Build")
                 .AppendLine()
-                .AppendLine("| Username| Projectname | Stars | Watchers |")
-                .AppendLine("| --- | --- | --- | --- |");
-            foreach (var item in repositories.Where(q => !q.Archived).OrderByDescending(q => q.Stars).ThenByDescending(q => q.Watchers).ThenBy(q => q.Name))
-                sb.AppendLine($"| {item.Owner} | [{item.Name}]({item.HtmlUrl}) | {item.Stars:N0} | {item.Watchers:N0} |");
+                .AppendLine("| Username| Projectname | Stars | Watchers | Buildfile | Size |")
+                .AppendLine("| --- | --- | --- | --- | --- | --- |");
+            foreach (var item in repositories.Where(q => !q.Archived && q.BuildFileSize > 0).OrderByDescending(q => Score(q)).ThenBy(q => q.Name))
+                sb.AppendLine($"| {item.Owner} | [{item.Name}]({item.HtmlUrl}) | {item.Stars:N0} | {item.Watchers:N0} | [{item.BuildFilePath}]({item.BuildFileUrl}) | {item.BuildFileSize:N0}");
 
             return sb.ToString();
         }

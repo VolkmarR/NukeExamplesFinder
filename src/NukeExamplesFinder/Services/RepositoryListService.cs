@@ -31,6 +31,14 @@ namespace NukeExamplesFinder.Services
             values.LastDetailUpdated = DateTime.Now;
         }
 
+        void UpdateValues(Repository values, BuildFile newValues)
+        {
+            values.BuildFilePath = newValues.FilePath;
+            values.BuildFileUrl = newValues.Url;
+            values.BuildFileSize = newValues.Size;
+            values.BuildFileContent = newValues.Content;
+            values.LastBuildFileUpdated = DateTime.Now;
+        }
 
         public RepositoryListService(IGitHubGateway gitHubGateway, IFileGateway fileGateway)
         {
@@ -62,6 +70,15 @@ namespace NukeExamplesFinder.Services
             foreach (var item in await GitHubGateway.GetRepositoryDetailsAsync(ids))
             {
                 if (repoIndex.TryGetValue(item.Id, out var repository))
+                    UpdateValues(repository, item);
+            }
+
+            // Refresh the Build Files
+            refreshTrigger = DateTime.Now.AddDays(-1);
+            var refreshRepoList = repoList.Where(q => q.LastBuildFileUpdated < refreshTrigger && !q.Archived).OrderByDescending(q => q.LastBuildFileUpdated).Select(q => (q.Id, q.Owner, q.Name, q.BuildFilePath)).ToList();
+            foreach (var item in await GitHubGateway.GetBuildFilesAsync(refreshRepoList))
+            {
+                if (repoIndex.TryGetValue(item.RepoId, out var repository))
                     UpdateValues(repository, item);
             }
 
