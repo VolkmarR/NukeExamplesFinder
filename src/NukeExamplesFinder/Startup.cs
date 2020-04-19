@@ -24,7 +24,8 @@ namespace NukeExamplesFinder
         {
             builder
              .SetBasePath(Directory.GetCurrentDirectory())
-             .AddJsonFile($"appsettings.json", optional: false);
+             .AddJsonFile($"appsettings.json", optional: false)
+             .AddEnvironmentVariables("");
 
             if (string.Equals(Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT") ?? "development", "development", StringComparison.OrdinalIgnoreCase))
                 builder.AddUserSecrets<Program>();
