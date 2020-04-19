@@ -23,8 +23,18 @@ namespace NukeExamplesFinder.Gateways
         public int Watchers { get; set; }
     }
 
+    public class BuildFile
+    {
+        public long RepoId { get; set; }
+        public string FilePath { get; set; }
+        public string Url { get; set; }
+        public int Size { get; set; }
+        public string Content { get; set; }
+    }
+
     public interface IGitHubGateway
     {
+        Task<List<BuildFile>> GetBuildFilesAsync(List<(long id, string owner, string name, string buildFilePath)> repoList);
         Task<List<RepositoryCodeSearch>> GetRepositoriesWithNukeFileAsync();
 
         Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList);

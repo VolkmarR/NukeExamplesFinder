@@ -121,15 +121,27 @@ namespace NukeExamplesFinder.Gateways
         public async Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList)
         {
             Logger.LogInformation("Refeshing {count} repository details", idList.Count);
+
             var result = new List<RepositoryDetail>();
             var logPoition = 0;
+            Octokit.Repository repo;
+            bool canContinue;
+
             foreach (var id in idList)
             {
-                (var canContinue, var repo) = await ExecServiceAsync(() => GitHubClient.Repository.Get(id));
+                (canContinue, repo) = await ExecServiceAsync(() => GitHubClient.Repository.Get(id));
                 if (!canContinue || repo == null)
                     break;
 
-                result.Add(new RepositoryDetail { Id = id, Description = repo.Description, Archived = repo.Archived, Stars = repo.StargazersCount, Watchers = repo.SubscribersCount });
+                result.Add(new RepositoryDetail
+                {
+                    Id = id,
+                    Description = repo.Description,
+                    Archived = repo.Archived,
+                    Stars = repo.StargazersCount,
+                    Watchers = repo.SubscribersCount,
+                    
+                });
 
                 if (++logPoition % 25 == 0)
                     Logger.LogInformation("{position}", logPoition);
@@ -137,5 +149,51 @@ namespace NukeExamplesFinder.Gateways
 
             return result;
         }
+
+        
+        public async Task<List<BuildFile>> GetBuildFilesAsync(List<(long id, string owner, string name, string buildFilePath)> repoList)
+        {
+            Logger.LogInformation("Refeshing {count} build files", repoList.Count);
+
+            var result = new List<BuildFile>();
+            var logPoition = 0;
+            bool canContinue;
+            IReadOnlyList<RepositoryContent> contentResponse = null;
+
+            foreach (var repo in repoList)
+            {
+                try
+                {
+                    var path = !string.IsNullOrWhiteSpace(repo.buildFilePath) ? repo.buildFilePath : "build";
+                    (canContinue, contentResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(repo.owner, repo.name, "build"));
+                }
+                catch (NotFoundException)
+                {
+                    var searchCodeRequest = new SearchCodeRequest("Nuke", repo.owner, repo.name) { FileName = "build.cs" };
+                    SearchCodeResult searchResponse;
+
+                    (canContinue, searchResponse) = await ExecServiceAsync(() => GitHubClient.Search.SearchCode(searchCodeRequest));
+                    if (canContinue && searchResponse != null)
+                    {
+                        var buildFile = searchResponse.Items.FirstOrDefault(q => string.Equals(q.Name, "build.cs", StringComparison.OrdinalIgnoreCase));
+                        if (buildFile != null)
+                            (canContinue, contentResponse) = await ExecServiceAsync(() => GitHubClient.Repository.Content.GetAllContents(repo.owner, repo.name, buildFile.Path));
+                    }
+                }
+
+                if (!canContinue)
+                    break;
+
+                var contentFile = contentResponse?.FirstOrDefault(q => string.Equals(q.Name, "build.cs", StringComparison.OrdinalIgnoreCase) && q.Type == ContentType.File);
+                if (contentFile != null)
+                    result.Add(new BuildFile { RepoId = repo.id, FilePath = contentFile.Path, Url = contentFile.HtmlUrl, Size = contentFile.Size, Content = contentFile.Content });
+
+                if (++logPoition % 25 == 0)
+                    Logger.LogInformation("{position}", logPoition);
+            }
+
+            return result;
+        }
+
     }
 }
