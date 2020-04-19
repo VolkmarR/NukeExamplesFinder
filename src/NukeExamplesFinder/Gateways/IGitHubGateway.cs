@@ -35,6 +35,7 @@ namespace NukeExamplesFinder.Gateways
     public interface IGitHubGateway
     {
         Task<List<BuildFile>> GetBuildFilesAsync(List<(long id, string owner, string name, string buildFilePath)> repoList);
+        Task<List<RepositoryCodeSearch>> GetRepositoriesWithNukeBuildAsync();
         Task<List<RepositoryCodeSearch>> GetRepositoriesWithNukeFileAsync();
 
         Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList);
