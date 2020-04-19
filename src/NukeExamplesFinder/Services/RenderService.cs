@@ -22,10 +22,10 @@ namespace NukeExamplesFinder.Services
             sb
                 .AppendLine("# GitHub Repositories using Nuke.Build")
                 .AppendLine()
-                .AppendLine("| Username| Projectname | Stars | Watchers |")
-                .AppendLine("| --- | --- | --- | --- |");
+                .AppendLine("| Username| Projectname | Stars | Watchers | Buildfile | Size |")
+                .AppendLine("| --- | --- | --- | --- | --- | --- |");
             foreach (var item in repositories.Where(q => !q.Archived).OrderByDescending(q => q.Stars).ThenByDescending(q => q.Watchers).ThenBy(q => q.Name))
-                sb.AppendLine($"| {item.Owner} | [{item.Name}]({item.HtmlUrl}) | {item.Stars:N0} | {item.Watchers:N0} |");
+                sb.AppendLine($"| {item.Owner} | [{item.Name}]({item.HtmlUrl}) | {item.Stars:N0} | {item.Watchers:N0} | [{item.BuildFilePath}]({item.BuildFileUrl}) | {item.BuildFileSize:N0}");
 
             return sb.ToString();
         }
