@@ -16,9 +16,6 @@ namespace NukeExamplesFinder.Gateways
         readonly IGitHubClient GitHubClient;
         readonly ILogger Logger;
 
-        Models.Repository ToRepository(SearchCode item)
-            => new Models.Repository { Name = item.Repository.Name, HtmlUrl = item.Repository.HtmlUrl };
-
         RepositoryCodeSearch Transform(SearchCode item)
             => new RepositoryCodeSearch
             {
@@ -30,39 +27,45 @@ namespace NukeExamplesFinder.Gateways
                 Stars = item.Repository.StargazersCount,
             };
 
-        bool CheckApiAvailable()
+        async Task<bool> CheckApiAvailableAsync()
         {
             var apiInfo = GitHubClient.GetLastApiInfo();
             var rateLimit = apiInfo?.RateLimit;
-            if (rateLimit == null || rateLimit.Remaining > 0)
+            if (rateLimit == null)
+            {
+                var serverApiInfo = await GitHubClient.Miscellaneous.GetRateLimits();
+                rateLimit = serverApiInfo.Resources.Core;
+            }
+
+            if (rateLimit == null || rateLimit.Remaining > 2)
                 return true;
 
-            if (rateLimit.Reset - DateTime.UtcNow < new TimeSpan(0, 2, 0))
+            if ((rateLimit.Reset > DateTime.UtcNow) && (rateLimit.Reset - DateTime.UtcNow < new TimeSpan(0, 2, 0)))
             {
-                Logger.LogInformation("Waiting for Rate Limit reset");
+                Logger.LogInformation($"Waiting for Rate Limit reset {rateLimit.Reset.ToLocalTime()}");
                 Thread.Sleep((int)(rateLimit.Reset - DateTime.UtcNow).Ticks + 1000);
                 return true;
             }
 
             Logger.LogInformation("Rate Limit reset at {reset}", rateLimit.Reset.LocalDateTime);
-            return true;
+            return false;
         }
 
-        async Task<(T, bool canContinue)> ExecService<T>(Func<Task<T>> call)
+        async Task<(bool canContinue, T result)> ExecServiceAsync<T>(Func<Task<T>> call)
         {
             try
             {
-                if (CheckApiAvailable())
+                if (await CheckApiAvailableAsync())
                 {
                     Thread.Sleep(100);
-                    return (await call(), true);
+                    return (true, await call());
                 }
             }
             catch (AbuseException ex)
             {
                 Logger.LogError(ex, "ExecService");
             }
-            return (default, false);
+            return (false, default);
         }
 
         async Task<List<RepositoryCodeSearch>> CodeSearchAsync(SearchCodeRequest request, Func<SearchCode, bool> filter)
@@ -70,25 +73,20 @@ namespace NukeExamplesFinder.Gateways
             request.PerPage = 100;
             request.Page = 1;
             request.Forks = false;
+            request.Order = SortDirection.Descending;
+            request.SortField = CodeSearchSort.Indexed;
 
-            SearchCodeResult searchResult;
-            bool canContinue;
             var result = new List<RepositoryCodeSearch>();
 
-            do
+            while (true)
             {
-                (searchResult, canContinue) = await ExecService(() => GitHubClient.Search.SearchCode(request));
-                if (searchResult == null || !canContinue)
+                (var canContinue, var searchResult) = await ExecServiceAsync(() => GitHubClient.Search.SearchCode(request));
+                if (!canContinue || searchResult == null || searchResult.Items.Count == 0)
                     break;
 
-                if (searchResult.Items.Count > 0)
-                {
-                    result.AddRange(searchResult.Items.Where(filter).Select(Transform));
-                    if (searchResult.IncompleteResults)
-                        request.Page++;
-                }
-
-            } while (searchResult.IncompleteResults && CheckApiAvailable());
+                result.AddRange(searchResult.Items.Where(filter).Select(Transform));
+                request.Page++;
+            }
 
             return result;
         }
@@ -121,13 +119,11 @@ namespace NukeExamplesFinder.Gateways
 
         public async Task<List<RepositoryDetail>> GetRepositoryDetailsAsync(List<long> idList)
         {
-            idList = idList.Take(50).ToList();
-
             var result = new List<RepositoryDetail>();
-            foreach (long id in idList)
+            foreach (var id in idList)
             {
-                var (repo, canContinue) = await ExecService(() => GitHubClient.Repository.Get(id));
-                if (repo == null || !canContinue)
+                (var canContinue, var repo) = await ExecServiceAsync(() => GitHubClient.Repository.Get(id));
+                if (!canContinue || repo == null)
                     break;
 
                 result.Add(new RepositoryDetail { Id = id, Description = repo.Description, Archived = repo.Archived, Stars = repo.StargazersCount, Watchers = repo.SubscribersCount });
