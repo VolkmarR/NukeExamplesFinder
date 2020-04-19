@@ -2,13 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NukeExamplesFinder.Gateways;
+using NukeExamplesFinder.Models;
 using NukeExamplesFinder.Services;
 using Octokit;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace NukeExamplesFinder
 {
@@ -32,6 +32,8 @@ namespace NukeExamplesFinder
 
         public static void ConfigureServices(HostBuilderContext hostContext, IServiceCollection services)
         {
+            services.Configure<CredentialsSettings>(hostContext.Configuration.GetSection("Credentials"));
+            services.Configure<DataFilesSettings>(hostContext.Configuration.GetSection("DataFiles"));
             services.AddLogging(configure => configure.AddConsole());
             services.AddTransient<RenderService>();
             services.AddTransient<RepositoryListService>();
@@ -40,7 +42,7 @@ namespace NukeExamplesFinder
 
             services.AddTransient<IGitHubClient>((serviceProvider) =>
             {
-                var token = serviceProvider.GetRequiredService<IConfiguration>().GetValue<string>("Credentials:GitHubToken");
+                var token = serviceProvider.GetRequiredService<IOptions<CredentialsSettings>>().Value.GitHubToken;
                 if (string.IsNullOrEmpty(token))
                     throw new ArgumentException("Credentials:GitHubToken can not be empty");
 

@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NukeExamplesFinder", "src\NukeExamplesFinder\NukeExamplesFinder.csproj", "{AB1597AE-E7DC-40C6-B4E7-4269DAD5824F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NukeExamplesFinder", "src\NukeExamplesFinder\NukeExamplesFinder.csproj", "{AB1597AE-E7DC-40C6-B4E7-4269DAD5824F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{70313E0A-BF97-4F5F-8393-969078CD17EE}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

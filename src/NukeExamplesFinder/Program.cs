@@ -1,12 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
-using Microsoft.Extensions.Hosting;
+﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.IO;
-using Octokit;
 using NukeExamplesFinder.Services;
-using NukeExamplesFinder.Gateways;
 
 namespace NukeExamplesFinder
 {

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Options;
 using NukeExamplesFinder.Models;
 using System;
 using System.Collections.Generic;
@@ -27,9 +27,9 @@ namespace NukeExamplesFinder.Gateways
         string RepositoriesFilePath => Path.Combine(DataPath, "Repos.json");
         string MarkdownFilePath => Path.Combine(DataPath, "Directory.md");
 
-        public FileGateway(IConfiguration configuration)
+        public FileGateway(IOptions<DataFilesSettings> dataFileSettings)
         {
-            DataPath = configuration.GetValue<string>("DataFiles:Path");
+            DataPath = dataFileSettings.Value.Path;
             if (string.IsNullOrEmpty(DataPath))
                 DataPath = ".\\Data\\";
             Directory.CreateDirectory(DataPath);
