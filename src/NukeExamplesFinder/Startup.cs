@@ -25,9 +25,9 @@ namespace NukeExamplesFinder
             builder
              .SetBasePath(Directory.GetCurrentDirectory())
              .AddJsonFile($"appsettings.json", optional: false)
-             .AddEnvironmentVariables("");
+             .AddEnvironmentVariables("NukeExamplesFinder_");
 
-            if (string.Equals(Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT") ?? "development", "development", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT"), "development", StringComparison.OrdinalIgnoreCase))
                 builder.AddUserSecrets<Program>();
         }
 
@@ -44,7 +44,7 @@ namespace NukeExamplesFinder
             services.AddTransient<IGitHubClient>((serviceProvider) =>
             {
                 var token = serviceProvider.GetRequiredService<IOptions<CredentialsSettings>>().Value.GitHubToken;
-                if (string.IsNullOrEmpty(token))
+                if (string.IsNullOrEmpty(token) || token == "Enter GitHub Token here")
                     throw new ArgumentException("Credentials:GitHubToken can not be empty");
 
                 return new GitHubClient(new ProductHeaderValue("NukeExampleFinder")) { Credentials = new Credentials(token) };

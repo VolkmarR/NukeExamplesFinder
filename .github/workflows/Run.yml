@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v1
       - name: Run './build.cmd Run'
         run: ./build.cmd Run
+        env:
+            NukeExamplesFinder_Credentials__GitHubToken: ${{ secrets.NukeExamplesFinder_Credentials__GitHubToken }}
       - uses: actions/upload-artifact@v1
         with:
           name: Directory.md

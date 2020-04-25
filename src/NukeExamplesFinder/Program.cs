@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NukeExamplesFinder.Services;
+using Octokit;
 
 namespace NukeExamplesFinder
 {
@@ -22,6 +23,7 @@ namespace NukeExamplesFinder
             catch (Exception ex)
             {
                 services.GetRequiredService<ILogger<RepositoryListService>>().LogError(ex, "Error Occured");
+                Environment.Exit(-1);
             }
         }
 

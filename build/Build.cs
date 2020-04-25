@@ -22,6 +22,7 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
     nameof(Run),
     GitHubActionsImage.WindowsLatest, 
     On = new GitHubActionsTrigger[] { GitHubActionsTrigger.Push }, 
+    ImportSecrets = new string[]{ "NukeExamplesFinder_Credentials__GitHubToken" },
     InvokedTargets = new string[] { nameof(Run) })]
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
@@ -69,7 +70,10 @@ class Build : NukeBuild
         .Produces(RunOutputDirectory / "Directory.md", RunOutputDirectory / "Repos.json")
         .Executes(() =>
         {
-            var settings = new { Credentials = new { GitHubToken = "" }, DataFiles = new { Path = RunOutputDirectory } };
+            // Workaround to activate loading user secrets (for executing on developer machine)
+            Environment.SetEnvironmentVariable("NETCORE_ENVIRONMENT", "development");
+
+            var settings = new { DataFiles = new { Path = RunOutputDirectory } };
             File.WriteAllText(ArtifactsDirectory / "appsettings.json", JsonConvert.SerializeObject(settings));
 
             Tool tool = ToolResolver.GetLocalTool(ArtifactsDirectory / "NukeExamplesFinder.exe");

@@ -381,6 +381,7 @@
 | pkudrel | [Timerek](https://github.com/pkudrel/Timerek) | 0 | 1 | [build/Build.cs](https://github.com/pkudrel/Timerek/blob/master/build/Build.cs) | 1.987
 | joaomatossilva | [WorkflowDemo](https://github.com/joaomatossilva/WorkflowDemo) | 0 | 1 | [build/Build.cs](https://github.com/joaomatossilva/WorkflowDemo/blob/master/build/Build.cs) | 1.636
 | ModPlus-Software | [AutoCAD_mpRemoveAnnotScale](https://github.com/ModPlus-Software/AutoCAD_mpRemoveAnnotScale) | 0 | 0 | [build/Build.cs](https://github.com/ModPlus-Software/AutoCAD_mpRemoveAnnotScale/blob/master/build/Build.cs) | 2.593
+| csharp-today | [AzureUploader](https://github.com/csharp-today/AzureUploader) | 0 | 1 | [build/Build.cs](https://github.com/csharp-today/AzureUploader/blob/master/build/Build.cs) | 253
 | csharp-today | [Blazor.AzureB2C](https://github.com/csharp-today/Blazor.AzureB2C) | 0 | 1 | [build/Build.cs](https://github.com/csharp-today/Blazor.AzureB2C/blob/master/build/Build.cs) | 253
 | csharp-today | [Blazor.MultiLang](https://github.com/csharp-today/Blazor.MultiLang) | 0 | 1 | [build/Build.cs](https://github.com/csharp-today/Blazor.MultiLang/blob/master/build/Build.cs) | 253
 | johanssonm | [DateTimeExtension](https://github.com/johanssonm/DateTimeExtension) | 0 | 0 | [build/Build.cs](https://github.com/johanssonm/DateTimeExtension/blob/master/build/Build.cs) | 2.310
