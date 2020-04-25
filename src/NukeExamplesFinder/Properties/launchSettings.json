@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "NukeExamplesFinder": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "NETCORE_ENVIRONMENT": "development"
+      }
+    }
+  }
+}
