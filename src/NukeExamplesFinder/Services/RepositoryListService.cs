@@ -77,7 +77,7 @@ namespace NukeExamplesFinder.Services
             }
 
             // Refresh the Build Files
-            refreshTrigger = DateTime.Now.AddDays(-1);
+            refreshTrigger = DateTime.Now.AddDays(-7);
             var refreshRepoList = repoList.Where(q => q.LastBuildFileUpdated < refreshTrigger && !q.Archived).OrderByDescending(q => q.LastBuildFileUpdated).Select(q => (q.Id, q.Owner, q.Name, q.BuildFilePath)).ToList();
             foreach (var item in await GitHubGateway.GetBuildFilesAsync(refreshRepoList))
             {
