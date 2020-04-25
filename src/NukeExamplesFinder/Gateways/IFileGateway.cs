@@ -6,7 +6,7 @@ namespace NukeExamplesFinder.Gateways
 {
     public interface IFileGateway
     {
-        void SaveMarkdown(string content);
+        void SaveMarkdownDirectory(string content);
         List<Repository> LoadRepositories();
         void SaveRepositories(List<Repository> repositories);
 

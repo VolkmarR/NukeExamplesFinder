@@ -25,7 +25,7 @@ namespace NukeExamplesFinder.Gateways
         }
 
         string RepositoriesFilePath => Path.Combine(DataPath, "Repos.json");
-        string MarkdownFilePath => Path.Combine(DataPath, "Directory.md");
+        string MarkdownDirectoryFilePath => Path.Combine(DataPath, "Directory.md");
 
         public FileGateway(IOptions<DataFilesSettings> dataFileSettings)
         {
@@ -52,10 +52,10 @@ namespace NukeExamplesFinder.Gateways
             File.WriteAllText(RepositoriesFilePath, JsonSerializer.Serialize(repositories.OrderBy(q => q.Id), JsonOptions));
         }
 
-        public void SaveMarkdown(string content)
+        public void SaveMarkdownDirectory(string content)
         {
-            MoveToArchive(MarkdownFilePath);
-            File.WriteAllText(MarkdownFilePath, content);
+            MoveToArchive(MarkdownDirectoryFilePath);
+            File.WriteAllText(MarkdownDirectoryFilePath, content);
         }
     }
 }
