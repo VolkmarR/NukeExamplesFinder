@@ -1,4 +1,6 @@
-﻿using NukeExamplesFinder.Gateways;
+﻿using Microsoft.Extensions.Logging;
+using NukeExamplesFinder.Common;
+using NukeExamplesFinder.Gateways;
 using NukeExamplesFinder.Models;
 using System;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ namespace NukeExamplesFinder.Services
     {
         readonly IGitHubGateway GitHubGateway;
         readonly IFileGateway FileGateway;
+        readonly ILogger<RepositoryListService> Logger;
 
         void UpdateValues(Repository values, RepositoryCodeSearch newValues)
         {
@@ -40,8 +43,22 @@ namespace NukeExamplesFinder.Services
             values.LastBuildFileUpdated = DateTime.Now;
         }
 
-        public RepositoryListService(IGitHubGateway gitHubGateway, IFileGateway fileGateway)
+        void UpdateTargets(Repository values)
         {
+            try
+            {
+                var parser = new BuildFileParser(values.BuildFileContent);
+                values.Targets = parser.Targets;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Parse error {msg} - Content: {cnt}", ex.Message, values.BuildFileContent);
+            }
+        }
+
+        public RepositoryListService(IGitHubGateway gitHubGateway, IFileGateway fileGateway, ILogger<RepositoryListService> logger)
+        {
+            Logger = logger;
             FileGateway = fileGateway;
             GitHubGateway = gitHubGateway;
         }
@@ -84,6 +101,10 @@ namespace NukeExamplesFinder.Services
                 if (repoIndex.TryGetValue(item.RepoId, out var repository))
                     UpdateValues(repository, item);
             }
+
+            // Parse content
+            foreach (var item in repoList)
+                UpdateTargets(item);
 
             FileGateway.SaveRepositories(repoList);
         }
