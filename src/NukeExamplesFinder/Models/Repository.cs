@@ -29,5 +29,7 @@ namespace NukeExamplesFinder.Models
         public string BuildFileUrl { get; set; }
         public int BuildFileSize { get; set; }
         public string BuildFileContent { get; set; }
+
+        public List<BuildFileTarget> Targets { get; set; }
     }
 }
