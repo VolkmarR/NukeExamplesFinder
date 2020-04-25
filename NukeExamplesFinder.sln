@@ -10,12 +10,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{70313E0A-B
 		readme.md = readme.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{B79B090D-7A23-4C54-9791-11C939F017ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B79B090D-7A23-4C54-9791-11C939F017ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B79B090D-7A23-4C54-9791-11C939F017ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB1597AE-E7DC-40C6-B4E7-4269DAD5824F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AB1597AE-E7DC-40C6-B4E7-4269DAD5824F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB1597AE-E7DC-40C6-B4E7-4269DAD5824F}.Release|Any CPU.ActiveCfg = Release|Any CPU
