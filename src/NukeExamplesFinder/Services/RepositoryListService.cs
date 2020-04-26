@@ -48,7 +48,7 @@ namespace NukeExamplesFinder.Services
             try
             {
                 var parser = new BuildFileParser(values.BuildFileContent);
-                values.Targets = parser.Targets;
+                values.Targets = parser.TargetsWithExecute;
             }
             catch (Exception ex)
             {

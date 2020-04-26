@@ -19,26 +19,26 @@ namespace NukeExamplesFinder.Common
         BuildFileTarget  AnalyzeProperty(PropertyDeclarationSyntax property)
         {
             var childs = property.ChildNodesAndTokens();
-            if (childs.Any(q => q.IsNode && q.ToString() == "Target"))
+            if (childs.Any(q => q.IsNode && q.ToString() == "Target") && property.ToString().Contains("Execute"))
             {
                 return new BuildFileTarget { TargetName = property.Identifier.ToString(), Code = property.ToString() };
             }
             return null;
         }
 
-        public readonly List<BuildFileTarget> Targets;
+        public readonly List<BuildFileTarget> TargetsWithExecute;
 
         public BuildFileParser(string content)
         {
             if (string.IsNullOrEmpty(content))
             {
-                Targets = new List<BuildFileTarget>();
+                TargetsWithExecute = new List<BuildFileTarget>();
                 return;
             }
 
             Tree = CSharpSyntaxTree.ParseText(content);
 
-            Targets = SearchFor<PropertyDeclarationSyntax>().Select(AnalyzeProperty).Where(q => q != null).ToList();
+            TargetsWithExecute = SearchFor<PropertyDeclarationSyntax>().Select(AnalyzeProperty).Where(q => q != null).ToList();
         }
     }
 }

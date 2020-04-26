@@ -88,7 +88,7 @@ class Build : NukeBuild
 }
 }";
 
-            new BuildFileParser(content).Targets.Select(q => q.TargetName).Should().BeEquivalentTo("Clean", "Restore", "Compile");
+            new BuildFileParser(content).TargetsWithExecute.Select(q => q.TargetName).Should().BeEquivalentTo("Clean", "Restore", "Compile");
         }
 
         [Fact]
@@ -132,7 +132,7 @@ class Solution : DotNetCoreBuild, IDotNetCoreBuild
     public new Target Pack => _ => _.With(this, DotNetCoreBuild.Pack);
 }";
 
-            new BuildFileParser(content).Targets.Select(q => q.TargetName).Should().BeEquivalentTo("Default", "Restore", "Build", "Test", "Pack");
+            new BuildFileParser(content).TargetsWithExecute.Should().BeEmpty();
         }
 
 
