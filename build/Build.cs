@@ -67,7 +67,7 @@ class Build : NukeBuild
 
     Target Run => _ => _
         .DependsOn(Compile)
-        .Produces(RunOutputDirectory / "Directory.md", RunOutputDirectory / "Repos.json")
+        .Produces(RunOutputDirectory / "Directory.md", RunOutputDirectory / "Repos.json", RunOutputDirectory / "Targets.md")
         .Executes(() =>
         {
             // Workaround to activate loading user secrets (for executing on developer machine)

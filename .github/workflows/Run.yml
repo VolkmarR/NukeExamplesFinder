@@ -36,3 +36,7 @@ jobs:
         with:
           name: Repos.json
           path: output/Repos.json
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Targets.md
+          path: output/Targets.md
