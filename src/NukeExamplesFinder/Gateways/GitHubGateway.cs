@@ -147,16 +147,16 @@ namespace NukeExamplesFinder.Gateways
             foreach (var id in idList)
             {
                 (canContinue, repo) = await ExecServiceAsync(() => GitHubClient.Repository.Get(id));
-                if (!canContinue || repo == null)
+                if (!canContinue)
                     break;
 
                 result.Add(new RepositoryDetail
                 {
                     Id = id,
-                    Description = repo.Description,
-                    Archived = repo.Archived,
-                    Stars = repo.StargazersCount,
-                    Watchers = repo.SubscribersCount,
+                    Description = repo?.Description,
+                    Archived = repo?.Archived ?? true,
+                    Stars = repo?.StargazersCount ?? 0,
+                    Watchers = repo?.SubscribersCount ?? 0,
 
                 });
 
@@ -233,6 +233,8 @@ namespace NukeExamplesFinder.Gateways
 
                 if (contentFile != null)
                     result.Add(new BuildFile { RepoId = id, FilePath = contentFile.Path, Url = contentFile.HtmlUrl, Size = contentFile.Size, Content = contentFile.Content });
+                else
+                    result.Add(new BuildFile { RepoId = id, FilePath = "", Url = "", Size = 0, Content = "" });
 
                 if (++logPoition % 25 == 0)
                     Logger.LogInformation("{position}", logPoition);
