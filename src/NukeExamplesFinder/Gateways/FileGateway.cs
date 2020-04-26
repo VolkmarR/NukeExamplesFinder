@@ -24,8 +24,15 @@ namespace NukeExamplesFinder.Gateways
             File.Move(filePath, Path.Combine(ArchivePath, archiveFileName));
         }
 
+        void MoveToArchiveAndSaveContent(string filePath, string content)
+        {
+            MoveToArchive(filePath);
+            File.WriteAllText(filePath, content);
+        }
+
         string RepositoriesFilePath => Path.Combine(DataPath, "Repos.json");
         string MarkdownDirectoryFilePath => Path.Combine(DataPath, "Directory.md");
+        string MarkdownTargetsFilePath => Path.Combine(DataPath, "Targets.md");
 
         public FileGateway(IOptions<DataFilesSettings> dataFileSettings)
         {
@@ -47,15 +54,12 @@ namespace NukeExamplesFinder.Gateways
         }
 
         public void SaveRepositories(List<Repository> repositories)
-        {
-            MoveToArchive(RepositoriesFilePath);
-            File.WriteAllText(RepositoriesFilePath, JsonSerializer.Serialize(repositories.OrderBy(q => q.Id), JsonOptions));
-        }
+            => MoveToArchiveAndSaveContent(RepositoriesFilePath, JsonSerializer.Serialize(repositories.OrderBy(q => q.Id), JsonOptions));
 
         public void SaveMarkdownDirectory(string content)
-        {
-            MoveToArchive(MarkdownDirectoryFilePath);
-            File.WriteAllText(MarkdownDirectoryFilePath, content);
-        }
+            => MoveToArchiveAndSaveContent(MarkdownDirectoryFilePath, content);
+
+        public void SaveMarkdownTargets(string content)
+            => MoveToArchiveAndSaveContent(MarkdownTargetsFilePath, content);
     }
 }
